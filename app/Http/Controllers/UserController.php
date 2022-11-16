@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -44,5 +45,33 @@ class UserController extends Controller
         return view("user/register_success", [
             "userID" => $userID,
         ]);
+    }
+
+    public function processLogin(Request $request){
+        $login = $request->validate([
+            'email' => ['required', 'email'], 
+            'password' => ['required']
+        ]);
+
+        // dd($login);
+        //proses validasi user
+        if (Auth::attempt($login) == true) {
+            $request->session()->regenerate();
+            if (Auth::user()->type == 0) { //member      
+                return redirect('member');
+            }else{//admin
+                return redirect('member/list');
+            }
+        }else{
+            return redirect('user/login')->withError('login gagal');
+        }
+    }
+
+    public function processLogout(){
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect('user/login');
+
     }
 }
